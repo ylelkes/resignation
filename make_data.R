@@ -1,0 +1,11 @@
+library(tidyverse)
+week2 <- rio::import("../../survey data/week2_2022_label.csv")
+week3 <- rio::import("../../survey data/week3_2022_label.csv")
+week2$engagement_measure <-  week2$w2_2022_1_wright_state
+week2 <- week2 %>% select(!starts_with("w2"),res1=w2_2022_2_resignation_1,res2=w2_2022_2_resignation_2)
+week3 <- week3 %>% select(!starts_with("w3"),res1=w3_2022_2_resignation_1,res2=w3_2022_2_resignation_2)
+week2 <- week2 %>% select(intersect(names(week2),names(week3)))
+week3 <- week3 %>% select(intersect(names(week2),names(week3)))
+resignation <- rbind(week2,week3)
+resignation <- filter(resignation,engagement_measure=="Iowa")
+save(resignation,file="resignation.RData")

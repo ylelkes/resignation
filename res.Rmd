@@ -1,0 +1,236 @@
+---
+title: "Resignation"
+author: "Yph Lelkes"
+date: "2022-12-08"
+output: tint::tintHtml
+latexfonts: 
+  - package: newtxmath
+    options: 
+      - cmintegrals
+      - cmbraces
+  - package: ebgaramond-maths
+  - package: nimbusmononarrow
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F,warning = F,message = F)
+library(tidyverse)
+library(freqtables)
+wrapper <- function(x, ...) 
+{
+  paste(strwrap(x, ...), collapse = "\n")
+}
+
+```
+
+Summary: While lots of people are worried about the future of democracy, few think its end is inevitable (roughly 17 percent of the population).
+
+1. Resignation is similar across gender, race, but the more educated are less resigned. 
+2. Republicans are more resigned than democrats, pure independents are the most resigned
+3. Resignation is related to a bunch of political attitudes. 
+  * slightly less trusting, generally
+  * Those who are resigned are less likely to think voting is important
+  * Don't think they'll get fair treatment from the government
+  * not particularly proud to be american
+  * don't think the government will come to their aid
+  * think the government is corrupt
+4. Very little difference in perceptions of the other side's support for democratic norms
+5. But they are more likely to support undemocratic behavior
+6. And far more likely to support partisan violence
+7. Resigned democrats, but not resigned republicans, are less affectively polarized. 
+
+
+```{r}
+load("resignation.RData")
+questions <- read.csv("../../survey data/questions.csv")
+resignation$res1 <- factor(resignation$res1,levels=rev(c("Strongly disagree","Somewhat disagree","Neither agree nor disagree","Somewhat agree","Strongly agree")))
+resignation$res2 <- factor(resignation$res2,levels=rev(c("Strongly disagree","Somewhat disagree","Neither agree nor disagree","Somewhat agree","Strongly agree")))
+```
+
+```{r}
+
+resignation %>% count(res1,wt =weight ) %>% mutate(p=n/sum(n)) %>% ggplot(aes(x=res1,y = p,label = scales::percent(p))) + 
+  geom_col() + 
+  scale_y_continuous(labels=scales::percent) +
+  ylab("relative frequencies") + theme_bw(base_size = 15)+ggtitle("America is heading toward the end of democracy, where free and fair elections will no longer occur.") +xlab("")+theme(plot.title = element_text(size = 10))+geom_text(position = position_dodge(width = .9),    # move to center of bars
+              vjust = -0.5,    # nudge above top of bar
+              size = 3) + 
+    scale_y_continuous(labels = scales::percent)+theme(axis.text.x = element_text(angle = 90))+theme(plot.title = element_text(size = 10))
+
+
+```
+
+```{r}
+resignation %>% count(res2,wt =weight ) %>% mutate(p=n/sum(n)) %>% drop_na() %>% ggplot(aes(x=res2,y = p,label = scales::percent(p))) + 
+  geom_col() + 
+  scale_y_continuous(labels=scales::percent) +
+  ylab("relative frequencies") + theme_bw(base_size = 15)+ggtitle("Very little can be done to stop American democracy from ending in the next decade.") +xlab("")+geom_text(position = position_dodge(width = .9),    # move to center of bars
+              vjust = -0.5,    # nudge above top of bar
+              size = 3) + 
+    scale_y_continuous(labels = scales::percent)+    scale_y_continuous(labels = scales::percent)+theme(axis.text.x = element_text(angle = 90))+theme(plot.title = element_text(size = 10))
+
+
+
+```
+
+## Resignation: Agreeing with both comments (roughly 17 percent of the population)
+
+```{r}
+resignation$resigned <- ifelse(as.numeric(resignation$res1)<3 & as.numeric(resignation$res2)<3,"Resigned","Not Resigned") 
+resignation %>% count(resigned,wt =weight ) %>% mutate(p=n/sum(n)) %>% drop_na() %>% ggplot(aes(x=resigned,y = p,label = scales::percent(p))) + 
+  geom_col() + 
+  scale_y_continuous(labels=scales::percent) +
+  ylab("relative frequencies") + theme_bw(base_size = 15)+ggtitle("Percentage of Americans who are resigned") +xlab("")+    geom_text(position = position_dodge(width = .9),    # move to center of bars               vjust = -0.5,    # nudge above top of bar               size = 3) +      scale_y_continuous(labels = scales::percent)+    geom_text(position = position_dodge(width = .9),    # move to center of bars
+              vjust = -0.5,    # nudge above top of bar
+              size = 3) + 
+    scale_y_continuous(labels = scales::percent)
+
+
+```
+
+
+## Who is resigned?
+
+```{r}
+resignation <- resignation %>% mutate(race = case_when(race=='White'~'White',
+                                        race=='Black'~'Black',
+                                        race=='Hispanic'~'Hispanic',
+                                        TRUE~'Other'))
+
+resignation %>% group_by(race) %>% freq_table(race,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle("Resignation by Race")+facet_wrap(~col_cat)
+```
+
+```{r}
+resignation %>% group_by(gender) %>% freq_table(gender,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle("Resignation by Gender")+facet_wrap(~col_cat)
+```
+
+### Percent resigned by education
+```{r}
+resignation <- resignation %>% mutate(educ = case_when(educ %in% c("No HS","High school graduate")~'HS or Less',
+                                        educ %in% c("Some college","2-year")~'Some College',
+                                        educ %in% c("4-year","Post-grad")~'College+')) %>% mutate(educ = factor(educ,levels=c('HS or Less','Some College','College+')))
+
+resignation %>% group_by(educ) %>% freq_table(educ,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle("Resignation by Education")+facet_wrap(~col_cat)
+
+```
+### Partisanship
+```{r}
+resignation <- resignation %>% mutate(pid=case_when(grepl("Democrat",pid7) ~'Democrat',
+                                     grepl("Republican",pid7) ~'Republican',
+                                     TRUE~'Independent'))
+                                     
+resignation %>% group_by(pid) %>% freq_table(pid,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle("Resignation by PID")+facet_wrap(~col_cat)
+```
+
+### Partisanship
+```{r}
+resignation <- resignation %>% mutate(presvote20post_1 = case_when(presvote20post=="Donald Trump"~'Trump',
+                                                  presvote20post=="Joe Biden" ~ 'Biden',
+                                                  presvote20post=='Did not vote for President'~'Did not vote',
+                                                  TRUE~'Other'))
+resignation <- resignation %>% mutate(pid=case_when(grepl("Democrat",pid7) ~'Democrat',
+                                     grepl("Republican",pid7) ~'Republican',
+                                     TRUE~'Independent'))
+                                     
+resignation %>% group_by(presvote20post_1) %>% freq_table(presvote20post_1,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle("Resignation by PID")+facet_wrap(~col_cat) + xlab("")
+
+## Do you think your wallet (or your valuables) would be returned to you if it were found by a stranger?
+```
+
+```{r}
+resignation$general_trust[resignation$general_trust==""]=NA
+resignation %>% drop_na(general_trust) %>% group_by(general_trust) %>% freq_table(general_trust,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle(wrapper("Do you think your wallet (or your valuables) would be returned to you if it were found by a stranger?",40))+facet_wrap(~col_cat) + xlab("")
+#  geom_col(position = "dodge2") + 
+#  scale_y_continuous(labels=scales::percent) +
+#  ylab("relative frequencies") + theme_bw(base_size = 15)+ggtitle("Percentage of Americans who are resigned") +xlab("") 
+```
+
+## 
+
+```{r}
+resignation$institutional_corruption <- factor(resignation$institutional_corruption,c("Extremely likely to refuse","Likely to refuse","Equally likely to refuse or accept","Likely to accept","Extremely likely to accept"))
+
+resignation %>% drop_na(general_trust) %>% group_by(general_trust) %>% freq_table(institutional_corruption,resigned) %>%  ggplot(aes(x=row_cat,y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle(wrapper("If you were to complain about the poor quality of a public service, how likely or unlikely is it that the problem would be easily resolved?",width=40))+facet_wrap(~col_cat) + xlab("")
+#  geom_col(position = "dodge2") + 
+```
+
+
+```{r}
+resignation$vote_importance <- factor(resignation$vote_importance,c("Very unimportant","Unimportant","Neither important nor unimportant","Important","Very important"))
+resignation %>% drop_na(vote_importance) %>% group_by(vote_importance) %>% freq_table(vote_importance,resigned) %>%  ggplot(aes(x=fct_relevel(row_cat,c("Very unimportant","Unimportant","Neither important nor unimportant","Important","Very important")),y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle(wrapper("How important or unimportant is it to vote in every election?",40))+facet_wrap(~col_cat) + xlab("")
+
+```
+
+
+## Percent resigned by pride in being American 
+```{r}
+resignation$pride <- factor(resignation$pride,c("Not at all proud","Only a little proud","Moderately proud","Very proud","Extremely proud"))
+
+resignation %>% drop_na(pride) %>% freq_table(pride,resigned) %>%  ggplot(aes(x=fct_relevel(row_cat,levels(resignation$pride)),y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle(wrapper("How important or unimportant is it to vote in every election?",40))+facet_wrap(~col_cat) + xlab("")
+
+
+```
+
+## Do you agree or disagree that you can expect fair treatment from government authorities?
+
+```{r}
+resignation$fair_treatment <- factor(resignation$fair_treatment,levels=rev(c("Strongly disagree","Disagree","Neither agree nor disagree","Agree","Strongly agree")))
+resignation %>% drop_na(fair_treatment) %>% freq_table(fair_treatment,resigned) %>%  ggplot(aes(x=fct_relevel(row_cat,levels(resignation$fair_treatment)),y = percent_row))+geom_col(position = "dodge") + geom_errorbar(aes(ymin=lcl_row,ymax=ucl_row),position=position_dodge(width=0.9))+ggtitle(wrapper("How important or unimportant is it to vote in every election?",40))+facet_wrap(~col_cat) + xlab("")
+
+#  geom_col(position = "dodge2") + 
+#  scale_y_continuous(labels=scales::percent) +
+#  ylab("relative frequencies") + theme_bw(base_size = 15)+ggtitle("Percentage of Americans who are resigned") +xlab("") 
+```
+
+
+
+
+### Resigned people are far more likely to support undemocratic behavior
+
+```{r}
+resignation %>% select(resigned,starts_with("norm")) %>% select(!ends_with("perception")) %>% pivot_longer(!resigned) %>% left_join(questions,c("name"="label")) %>% mutate(value1=case_when(
+  value %in% c("Agree","Strongly Agree") ~ 1,
+  value %in% c("Strongly disagree","Disagree","Neither agree nor disagree") ~ 0)) %>% drop_na() %>% group_by(short_label,resigned) %>% summarise(m=mean(value1),n=n())
+
+
+#  geom_col(position = "dodge2") + 
+#  scale_y_continuous(labels=scales::percent) +
+#  ylab("relative frequencies") + theme_bw(base_size = 15)+ggtitle("Percentage of Americans who are resigned") +xlab("") 
+```
+
+## Percent resigned by support for violence
+```{r}
+resignation$violence2[resignation$violence2==""]=0
+resignation$violence2 <- ifelse(resignation$violence2 %in% c("Strongly support","Support"),1,0)
+resignation$violence3[resignation$violence3==""]=0
+resignation$violence3 <- ifelse(resignation$violence3 %in% c("Strongly support","Support"),1,0)
+resignation$violence4[resignation$violence4==""]=0
+resignation$violence4 <- ifelse(resignation$violence4 %in% c("Strongly support","Support"),1,0)
+resignation$violence5[resignation$violence5==""]=0
+resignation$violence5 <- ifelse(resignation$violence5 %in% c("Strongly support","Support"),1,0)
+resignation$violence6[resignation$violence6==""]=0
+resignation$violence6 <- ifelse(resignation$violence6 %in% c("Strongly support","Support"),1,0)
+
+resignation %>% select(resigned,starts_with("violence")) %>% select(!ends_with("1")) %>% pivot_longer(!resigned) %>% left_join(questions,c("name"="label")) %>% group_by(short_label,resigned) %>% summarise(m=mean(value),n=n())
+
+
+
+```
+
+
+```{r,eval=F}
+resignation <- resignation %>% mutate(pid=case_when(grepl("Democrat",pid7) ~'Democrat',
+                                     grepl("Republican",pid7) ~'Republican',
+                                     TRUE~NA_character_))
+
+resignation$inparty[which(resignation$pid == "Democrat")] <- resignation$democrat_therm_1[which(resignation$pid == "Democrat")]
+resignation$inparty[which(resignation$pid == "Republican")] <- resignation$republican_therm_1[which(resignation$pid == "Republican")]
+resignation$outparty[which(resignation$pid == "Republican")] <- resignation$democrat_therm_1[which(resignation$pid == "Republican")]
+resignation$outparty[which(resignation$pid == "Democrat")] <- resignation$republican_therm_1[which(resignation$pid == "Democrat")]
+resignation$affpol <- resignation$inparty - resignation$outparty
+
+
+resignation %>% group_by(resigned,pid) %>% summarise(mean=mean(affpol,na.rm=T ),n=n()) %>% drop_na()
+```
+s
