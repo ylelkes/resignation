@@ -1,8 +1,8 @@
 ---
 title: "Resignation"
 author: "Yph Lelkes"
-date: "2022-12-08"
-output: tint::
+date: "2023-30-01"
+output: tint::tintHtml
 latexfonts: 
   - package: newtxmath
     options: 
