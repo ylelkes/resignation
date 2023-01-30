@@ -16,8 +16,8 @@ latexfonts:
 1. We are interested in examining a concept we are calling "democratic resignation." The Trump-years and the 2022 election brought about a lot of doom and gloom about democracy in America. We were interested in identifying which people were resigned, the correlates of resignation, and then experiments which increase or decrease resignation and look at the effects on various outcomes. 
 
 2. Our measure of resignation included two Agree/Disagree Questions:
-  * Next, we’d like to ask you a few questions about your perception of democracy today.  Resignation1: Do you agree or disagree with the following: America is heading toward the end of democracy, where free and fair elections will no longer occur.
-  * Very little can be done to stop American democracy from ending in the next decade.
+  * Do you agree or disagree with the following: America is heading toward the end of democracy, where free and fair elections will no longer occur.
+  * Do you agree or disagree with the following: Very little can be done to stop American democracy from ending in the next decade.
 
 3. Someone is considered resigned if they agree or strongly agree to both items. Correlation between items is r=.30
 
